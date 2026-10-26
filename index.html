@@ -1,0 +1,215 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Parking 4 ช่อง</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #172033;
+    }
+
+    header {
+      background: #123b68;
+      color: white;
+      text-align: center;
+      padding: 24px 12px;
+    }
+
+    header h1 { margin: 0 0 8px; }
+
+    main {
+      max-width: 850px;
+      margin: 24px auto;
+      padding: 0 14px;
+    }
+
+    .summary, .parking-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .summary { margin-bottom: 18px; }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 18px 12px;
+      text-align: center;
+      box-shadow: 0 3px 12px #0000000d;
+    }
+
+    .number {
+      font-size: 28px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .slot { border-top: 6px solid #16a34a; }
+    .slot.occupied { border-top-color: #dc2626; }
+    .icon { font-size: 36px; margin: 8px; }
+
+    .status {
+      color: #15803d;
+      font-size: 19px;
+      font-weight: bold;
+    }
+
+    .status.occupied { color: #dc2626; }
+
+    #connection {
+      text-align: center;
+      margin: 18px 0;
+      overflow-wrap: anywhere;
+    }
+
+    .error { color: #dc2626; }
+    .ok { color: #15803d; }
+
+    @media (max-width: 420px) {
+      .card { padding: 14px 8px; }
+      .number { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Smart Parking</h1>
+    <div>ระบบตรวจสอบที่จอดรถอัจฉริยะ</div>
+  </header>
+
+  <main>
+    <section class="summary">
+      <div class="card">
+        ช่องจอดทั้งหมด
+        <div class="number">4</div>
+      </div>
+      <div class="card">
+        ช่องว่าง
+        <div class="number" id="available">--</div>
+      </div>
+      <div class="card">
+        ช่องไม่ว่าง
+        <div class="number" id="occupiedCount">--</div>
+      </div>
+      <div class="card">
+        สถานะการรับข้อมูล
+        <div class="number" id="systemStatus">รอข้อมูล</div>
+      </div>
+    </section>
+
+    <section class="parking-grid">
+      <div class="card slot" id="cardL1">
+        <h2>ช่อง L1</h2>
+        <div class="icon" id="iconL1">🅿️</div>
+        <div class="status" id="statusL1">รอข้อมูล</div>
+      </div>
+      <div class="card slot" id="cardL2">
+        <h2>ช่อง L2</h2>
+        <div class="icon" id="iconL2">🅿️</div>
+        <div class="status" id="statusL2">รอข้อมูล</div>
+      </div>
+      <div class="card slot" id="cardL3">
+        <h2>ช่อง L3</h2>
+        <div class="icon" id="iconL3">🅿️</div>
+        <div class="status" id="statusL3">รอข้อมูล</div>
+      </div>
+      <div class="card slot" id="cardL4">
+        <h2>ช่อง L4</h2>
+        <div class="icon" id="iconL4">🅿️</div>
+        <div class="status" id="statusL4">รอข้อมูล</div>
+      </div>
+    </section>
+
+    <div id="connection">กำลังเชื่อมต่อ Firebase...</div>
+    <div id="lastUpdate" style="text-align:center;color:#64748b"></div>
+  </main>
+
+  <script>
+    // ใช้ URL เดียวกับในโค้ด ESP32
+    const FIREBASE_URL =
+      "https://smart-parking-fe245-default-rtdb.firebaseio.com/";
+
+    async function updateParking() {
+      const connection = document.getElementById("connection");
+
+      try {
+        const response = await fetch(
+          FIREBASE_URL + "/parking.json",
+          { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+
+        const data = await response.json();
+
+        if (!data || typeof data !== "object") {
+          throw new Error("ยังไม่มีข้อมูลจาก ESP32");
+        }
+
+        let occupied = 0;
+
+        for (let i = 1; i <= 4; i++) {
+          const key = "L" + i;
+
+          if (typeof data[key] !== "boolean") {
+            throw new Error("ข้อมูล " + key + " ไม่ถูกต้อง");
+          }
+
+          const isOccupied = data[key];
+          const card = document.getElementById("card" + key);
+          const status = document.getElementById("status" + key);
+          const icon = document.getElementById("icon" + key);
+
+          card.classList.toggle("occupied", isOccupied);
+          status.classList.toggle("occupied", isOccupied);
+
+          if (isOccupied) {
+            occupied++;
+            status.textContent = "ไม่ว่าง";
+            icon.textContent = "🚗";
+          } else {
+            status.textContent = "ว่าง";
+            icon.textContent = "🅿️";
+          }
+        }
+
+        document.getElementById("available").textContent = 4 - occupied;
+        document.getElementById("occupiedCount").textContent = occupied;
+
+        const systemStatus = document.getElementById("systemStatus");
+        systemStatus.textContent = "รับข้อมูลแล้ว";
+        systemStatus.style.color = "#15803d";
+
+        connection.textContent = "อ่านข้อมูลจาก Firebase สำเร็จ";
+        connection.className = "ok";
+
+        document.getElementById("lastUpdate").textContent =
+          "หน้าเว็บตรวจสอบล่าสุด: " +
+          new Date().toLocaleTimeString("th-TH");
+
+      } catch (error) {
+        connection.textContent =
+          "อ่านข้อมูลไม่ได้ กำลังลองใหม่: " + error.message;
+        connection.className = "error";
+
+        const systemStatus = document.getElementById("systemStatus");
+        systemStatus.textContent = "อ่านข้อมูลไม่ได้";
+        systemStatus.style.color = "#dc2626";
+      }
+    }
+
+    updateParking();
+    setInterval(updateParking, 2000);
+  </script>
+</body>
+</html>
