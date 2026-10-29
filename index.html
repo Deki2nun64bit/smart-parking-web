@@ -89,7 +89,7 @@
     <section class="summary">
       <div class="card">
         ช่องจอดทั้งหมด
-        <div class="number">4</div>
+        <div class="number">10</div>
       </div>
       <div class="card">
         ช่องว่าง
@@ -126,6 +126,30 @@
         <div class="icon" id="iconL4">🅿️</div>
         <div class="status" id="statusL4">รอข้อมูล</div>
       </div>
+       <h2>ช่อง L5</h2>
+        <div class="icon" id="iconL5">🅿️</div>
+        <div class="status" id="statusL5">รอข้อมูล</div>
+      </div>
+       <h2>ช่อง L6</h2>
+        <div class="icon" id="iconL6">🅿️</div>
+        <div class="status" id="statusL6">รอข้อมูล</div>
+      </div>
+       <h2>ช่อง L7</h2>
+        <div class="icon" id="iconL7">🅿️</div>
+        <div class="status" id="statusL7">รอข้อมูล</div>
+      </div>
+       <h2>ช่อง L8</h2>
+        <div class="icon" id="iconL8">🅿️</div>
+        <div class="status" id="statusL8">รอข้อมูล</div>
+      </div>
+       <h2>ช่อง L9</h2>
+        <div class="icon" id="iconL9">🅿️</div>
+        <div class="status" id="statusL9">รอข้อมูล</div>
+      </div>
+       <h2>ช่อง L10</h2>
+        <div class="icon" id="iconL10">🅿️</div>
+        <div class="status" id="statusL10">รอข้อมูล</div>
+      </div>
     </section>
 
     <div id="connection">กำลังเชื่อมต่อ Firebase...</div>
@@ -158,7 +182,7 @@
 
         let occupied = 0;
 
-        for (let i = 1; i <= 4; i++) {
+        for (let i = 1; i <= 10; i++) {
           const key = "L" + i;
 
           if (typeof data[key] !== "boolean") {
@@ -183,7 +207,7 @@
           }
         }
 
-        document.getElementById("available").textContent = 4 - occupied;
+        document.getElementById("available").textContent = 10 - occupied;
         document.getElementById("occupiedCount").textContent = occupied;
 
         const systemStatus = document.getElementById("systemStatus");
